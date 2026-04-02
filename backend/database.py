@@ -322,9 +322,3 @@ def close_db():
             logger.info("✓ MongoDB connection closed")
         except Exception as e:
             logger.error(f"✗ Error closing MongoDB connection: {e}")
-        "total_score": row[3],
-        "eligibility": row[4],
-        "color": row[5],
-        "category_breakdown": json.loads(row[6]),
-        "suggestions": json.loads(row[7]),
-    }
