@@ -5,36 +5,28 @@ import { CheckCircle, AlertCircle, Star } from 'lucide-react'
 const EligibilityCards = ({ currentTier }) => {
   const tiers = [
     {
-      name: 'Not Yet Eligible',
-      color: 'red',
-      icon: AlertCircle,
-      range: '< 70 marks',
-      description: 'You need at least 70 marks across the 8 checkpoints to enter the eligibility band.',
-      benefits: ['Skill-building plan', 'Foundation courses', 'Peer coding groups'],
-    },
-    {
       name: 'Below 5 LPA',
       color: 'red',
       icon: AlertCircle,
-      range: '70 - 129 marks',
-      description: 'Eligible for packages up to 5 LPA. Focus on strengthening 1–2 weak checkpoints.',
-      benefits: ['Internships', 'Trainee programs', 'Campus roles'],
+      range: '< 100 points',
+      description: 'Entry-level roles. Keep improving skills.',
+      benefits: ['Internships', 'Trainee programs', 'Campus ambassador'],
     },
     {
-      name: 'Above 5 to Below 10 LPA',
+      name: '5–10 LPA',
       color: 'yellow',
       icon: Star,
-      range: '130 - 259 marks',
-      description: 'On track for 5–10 LPA offers. A few targeted improvements can push you to 10 LPA+.',
-      benefits: ['Graduate engineer roles', 'Developer positions', 'Consulting and analyst roles'],
+      range: '100-200 points',
+      description: 'Mid-level positions. Good opportunity.',
+      benefits: ['Graduate roles', 'Developer positions', 'Consulting'],
     },
     {
       name: 'Above 10 LPA',
       color: 'green',
       icon: CheckCircle,
-      range: '260+ marks',
-      description: 'You meet the criteria for premium offers above 10 LPA.',
-      benefits: ['Top product roles', 'Fast-track leadership programs', 'High-impact projects'],
+      range: '200+ points',
+      description: 'Senior roles. Excellent opportunity!',
+      benefits: ['Senior developer', 'Tech lead', 'Fast-track programs'],
     },
   ]
 
@@ -96,7 +88,7 @@ const EligibilityCards = ({ currentTier }) => {
       <h2 className="text-2xl font-bold text-slate-100">Eligibility Status</h2>
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

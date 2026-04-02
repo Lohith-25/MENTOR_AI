@@ -8,7 +8,6 @@ import MetricsGrid from '../components/MetricsGrid'
 import AnalyticsSection from '../components/AnalyticsSection'
 import SuggestionsCard from '../components/SuggestionsCard'
 import EligibilityCards from '../components/EligibilityCards'
-import CertificateBreakdown from '../components/CertificateBreakdown'
 import Confetti from '../components/Confetti'
 
 const DashboardPage = ({ onLogout }) => {
@@ -33,7 +32,7 @@ const DashboardPage = ({ onLogout }) => {
     return null
   }
 
-  const { total_score, max_possible_score, eligibility, category_breakdown, suggestions, certificate_marks, certificates } = predictionResult
+  const { total_score, max_possible_score, eligibility, category_breakdown, suggestions } = predictionResult
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -124,16 +123,6 @@ const DashboardPage = ({ onLogout }) => {
         <motion.div variants={itemVariants}>
           <MetricsGrid categoryBreakdown={category_breakdown} />
         </motion.div>
-
-        {/* Certificate Breakdown - if certificates exist */}
-        {certificates && certificates.length > 0 && (
-          <motion.div variants={itemVariants}>
-            <CertificateBreakdown 
-              certificateMarks={certificate_marks || 0} 
-              certificates={certificates} 
-            />
-          </motion.div>
-        )}
 
         {/* Analytics Section */}
         <motion.div variants={itemVariants}>
