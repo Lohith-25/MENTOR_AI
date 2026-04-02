@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { usePrediction } from '../context/PredictionContext'
 import { predictionAPI } from '../utils/api'
+import Rubric2028 from '../components/Rubric2028'
+import CertificateUpload from '../components/CertificateUpload'
 
 const InputPage = ({ onLogout }) => {
   const navigate = useNavigate()
@@ -34,6 +36,8 @@ const InputPage = ({ onLogout }) => {
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
+  const [certificates, setCertificates] = useState([])
+  const [certificateMarks, setCertificateMarks] = useState(0)
 
   const fields = [
     {
@@ -44,6 +48,7 @@ const InputPage = ({ onLogout }) => {
       placeholder: '0 - 2000',
       min: 0,
       max: 2000,
+      hint: '• Up to 5 LPA: 250+ (100+ LeetCode, 10 marks)\n• 5-10 LPA: 350+ (150+ LeetCode, 20 marks)\n• 10+ LPA: 600+ (200+ LeetCode, 30 marks)',
     },
     {
       key: 'leetcode_problems',
@@ -53,24 +58,27 @@ const InputPage = ({ onLogout }) => {
       placeholder: '0 - 3000',
       min: 0,
       max: 3000,
+      hint: 'Included in Coding Problems count above',
     },
     {
       key: 'aptitude',
-      label: 'Aptitude Score',
+      label: 'Aptitude Score (%)',
       type: 'number',
       icon: Target,
       placeholder: '0 - 100',
       min: 0,
       max: 100,
+      hint: '• Up to 5 LPA: Pass (5 marks)\n• 5-10 LPA: ≥75% (10 marks)\n• 10+ LPA: ≥85% or HackerRank Gold (20 marks)',
     },
     {
       key: 'skillrank',
-      label: 'SkillRank Score',
+      label: 'SkillRank Score (Avg %)',
       type: 'number',
       icon: BookOpen,
       placeholder: '0 - 100',
       min: 0,
       max: 100,
+      hint: '• >70: 5 marks\n• >75: 10 marks\n• >80: 15 marks',
     },
   ]
 
@@ -80,24 +88,48 @@ const InputPage = ({ onLogout }) => {
       label: 'Open Source Contribution',
       icon: GitBranch,
       options: ['Beginner', 'Intermediate', 'Advanced'],
+      descriptions: {
+        'Beginner': '1 Hacktoberfest PR, beginner issue, or GSSOC attempt (5 marks)',
+        'Intermediate': '4 PRs, GSSOC/GSoC Contributor badge, or OSS community tag (10 marks)',
+        'Advanced': '3+ merged PRs, Top Contributor badge, or 50+ star repo maintainer (20 marks)',
+      },
     },
     {
       key: 'competitions',
-      label: 'Competition Level',
+      label: 'Competition Achievement',
       icon: Trophy,
       options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+      descriptions: {
+        'Beginner': 'CodeVita R1, CodeChef Starters, AtCoder A-B (min 2, 5–10 marks each)',
+        'Intermediate': 'CodeVita R2, hackathon winner, Top 25–40%, AtCoder A-D (min 2, 10–20 marks each)',
+        'Advanced': 'ICPC finalist, Codeforces top 20%, LeetCode top 5%, AlgoUtsav finalist (min 3, 20–30 marks each)',
+        'Expert': 'Top-tier achievements in multiple platforms simultaneously',
+      },
     },
     {
       key: 'cp_rating',
-      label: 'CP Rating',
+      label: 'CP Rating (CodeChef / Codeforces / AtCoder)',
       icon: TrendingUp,
       options: ['1-star', '2-star', '3-star', '4-star', '5-star', '6-star'],
+      descriptions: {
+        '1-star': 'CodeChef 1★–2★ / CF Newbie 800–999 / AtCoder Grey (10 marks)',
+        '2-star': 'CodeChef 2★–3★ / CF Newbie→Pupil 1000–1199 / AtCoder Brown (20 marks)',
+        '3-star': 'CodeChef 3★+ / CF Pupil 1200+ / AtCoder Green (30 marks)',
+        '4-star': 'CodeChef 4★+ / CF Specialist 1300+ (30 marks)',
+        '5-star': 'CodeChef 5★+ / CF Expert 1400+ (30 marks)',
+        '6-star': 'CodeChef 6★+ / CF Master+ (30 marks)',
+      },
     },
     {
       key: 'projects',
-      label: 'Projects Level',
+      label: 'Project / Product Development',
       icon: Briefcase,
       options: ['Beginner', 'Intermediate', 'Advanced'],
+      descriptions: {
+        'Beginner': '3+ Beginner projects: SIH participant, Kaggle notebook, open-source 10+ stars (5 marks each)',
+        'Intermediate': '3+ Intermediate: SIH finalist, Kaggle bronze, Devfolio top 10, 20+ star repo (10 marks each)',
+        'Advanced': '3+ Advanced: SIH winner, Kaggle silver, research internship IIT/IISC, 50+ star repo (20 marks each)',
+      },
     },
   ]
 
@@ -137,6 +169,11 @@ const InputPage = ({ onLogout }) => {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleCertificatesChange = (certs, marks) => {
+    setCertificates(certs)
+    setCertificateMarks(marks)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -160,6 +197,12 @@ const InputPage = ({ onLogout }) => {
         projects: formData.projects,
         aptitude: parseFloat(formData.aptitude),
         skillrank: parseFloat(formData.skillrank),
+        certificate_marks: certificateMarks,
+        certificates: certificates.map(c => ({
+          fileName: c.fileName,
+          type: c.type,
+          marks: c.marks,
+        })),
       }
 
       const result = await predictionAPI.predict(dataToSend)
@@ -245,6 +288,33 @@ const InputPage = ({ onLogout }) => {
           </p>
         </motion.div>
 
+        {/* Quick Reference: Mark Thresholds */}
+        <motion.div
+          variants={itemVariants}
+          className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-3"
+        >
+          <div className="glass-lg p-4 text-center border-l-4 border-red-500">
+            <div className="text-sm text-slate-400">Not Yet Eligible</div>
+            <div className="text-2xl font-bold text-red-300">&lt; 70</div>
+            <div className="text-xs text-slate-500 mt-1">Still building</div>
+          </div>
+          <div className="glass-lg p-4 text-center border-l-4 border-red-400">
+            <div className="text-sm text-slate-400">Below 5 LPA</div>
+            <div className="text-2xl font-bold text-red-300">70–129</div>
+            <div className="text-xs text-slate-500 mt-1">Up to 5 LPA</div>
+          </div>
+          <div className="glass-lg p-4 text-center border-l-4 border-amber-500">
+            <div className="text-sm text-slate-400">5–10 LPA</div>
+            <div className="text-2xl font-bold text-amber-300">130–259</div>
+            <div className="text-xs text-slate-500 mt-1">Mid-tier roles</div>
+          </div>
+          <div className="glass-lg p-4 text-center border-l-4 border-green-500">
+            <div className="text-sm text-slate-400">Above 10 LPA</div>
+            <div className="text-2xl font-bold text-green-300">260+</div>
+            <div className="text-xs text-slate-500 mt-1">Premium offers</div>
+          </div>
+        </motion.div>
+
         {/* Form Card */}
         <motion.form
           onSubmit={handleSubmit}
@@ -292,6 +362,11 @@ const InputPage = ({ onLogout }) => {
                         : 'border-slate-700/50 hover:border-slate-600/50 focus:border-brand-blue'
                     }`}
                   />
+                  {field.hint && (
+                    <p className="text-xs text-slate-400 mt-2 whitespace-pre-line leading-relaxed">
+                      {field.hint}
+                    </p>
+                  )}
                   {errors[field.key] && (
                     <p className="text-red-400 text-xs mt-1">{errors[field.key]}</p>
                   )}
@@ -304,6 +379,8 @@ const InputPage = ({ onLogout }) => {
           <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6" variants={itemVariants}>
             {dropdownFields.map((field, idx) => {
               const Icon = field.icon
+              const currentValue = formData[field.key]
+              const description = field.descriptions?.[currentValue]
               return (
                 <motion.div
                   key={field.key}
@@ -334,9 +411,22 @@ const InputPage = ({ onLogout }) => {
                       </option>
                     ))}
                   </select>
+                  {description && (
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      {description}
+                    </p>
+                  )}
                 </motion.div>
               )
             })}
+          </motion.div>
+
+          {/* Certificate Upload Section */}
+          <motion.div
+            variants={itemVariants}
+            className="border-t border-slate-700/30 pt-8"
+          >
+            <CertificateUpload onCertificatesChange={handleCertificatesChange} />
           </motion.div>
 
           {/* Submit Button */}
@@ -395,6 +485,9 @@ const InputPage = ({ onLogout }) => {
             <div>Instant Results</div>
           </div>
         </motion.div>
+
+        {/* Real rubric for II Year 2028 batch */}
+        <Rubric2028 />
       </motion.div>
     </div>
   )

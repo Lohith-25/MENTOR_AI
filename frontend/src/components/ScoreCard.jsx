@@ -121,9 +121,11 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         transition={{ delay: 0.8 }}
       >
         <div className={`inline-block px-8 py-3 rounded-full font-bold text-lg backdrop-blur-md ${
-          eligibility.color === 'red' ? 'bg-red-500/20 text-red-300 border border-red-500/50' :
-          eligibility.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50' :
-          'bg-green-500/20 text-green-300 border border-green-500/50'
+          eligibility.color === 'green'
+            ? 'bg-green-500/20 text-green-300 border border-green-500/50'
+            : eligibility.color === 'yellow'
+            ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
+            : 'bg-red-500/20 text-red-300 border border-red-500/50'
         }`}>
           {eligibility.tier}
         </div>
@@ -137,9 +139,14 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         className="text-slate-400 text-sm"
       >
         <p>
-          {eligibility.color === 'red' && 'Keep working on your skills. Target: 100+ points'}
-          {eligibility.color === 'yellow' && 'Great! Focus on weak areas to reach 200+ points'}
-          {eligibility.color === 'green' && '🎉 Excellent! You\'re well-prepared for placements'}
+          {eligibility.tier === 'Not Yet Eligible' &&
+            'Build your profile across all 8 checkpoints to reach at least 70 marks.'}
+          {eligibility.tier === 'Below 5 LPA' &&
+            'You are eligible for below 5 LPA. Push towards 130+ marks for higher packages.'}
+          {eligibility.tier === 'Above 5 to Below 10 LPA' &&
+            'Strong profile. Closing a few gaps can move you to 260+ marks and 10 LPA+.'}
+          {eligibility.tier === 'Above 10 LPA' &&
+            "🎉 Excellent! You meet the criteria for 10 LPA and above."}
         </p>
       </motion.div>
 
@@ -160,9 +167,11 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
             animate={{ width: `${percentage}%` }}
             transition={{ delay: 0.3, duration: 1.2, ease: 'easeOut' }}
             className={`h-full rounded-full bg-gradient-to-r ${
-              eligibility.color === 'red' ? 'from-red-500 to-red-400' :
-              eligibility.color === 'yellow' ? 'from-yellow-500 to-yellow-400' :
-              'from-green-500 to-green-400'
+              eligibility.color === 'green'
+                ? 'from-green-500 to-green-400'
+                : eligibility.color === 'yellow'
+                ? 'from-yellow-500 to-yellow-400'
+                : 'from-red-500 to-red-400'
             }`}
           ></motion.div>
         </div>
