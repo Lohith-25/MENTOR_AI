@@ -8,7 +8,7 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models.score_calculator import ScoreCalculator
-from database import init_db, save_prediction, get_prediction_history, get_prediction_by_id
+from database import init_db, save_prediction, get_prediction_history, get_prediction_by_id, get_analytics, close_db
 
 # Configure logging
 logging.basicConfig(
@@ -59,7 +59,9 @@ def predict():
         "cp_rating": string (1-star to 6-star),
         "projects": string (Beginner/Intermediate/Advanced),
         "aptitude": number (0-100),
-        "skillrank": number (0-100)
+        "skillrank": number (0-100),
+        "certificate_marks": number (0-100, optional),
+        "certificates": array of { fileName, type, marks } (optional)
     }
     """
     try:
@@ -90,6 +92,8 @@ def predict():
                 color=result["eligibility"]["color"],
                 category_breakdown=result["category_breakdown"],
                 suggestions=result["suggestions"],
+                certificate_marks=result.get("certificate_marks", 0),
+                certificates=data.get("certificates", []),
             )
             result["prediction_id"] = prediction_id
         except Exception as db_error:
@@ -132,7 +136,7 @@ def get_history():
         }), 500
 
 
-@app.route("/api/predictions/<int:prediction_id>", methods=["GET"])
+@app.route("/api/predictions/<string:prediction_id>", methods=["GET"])
 def get_prediction(prediction_id):
     """Get a specific prediction by ID"""
     try:
@@ -158,6 +162,23 @@ def get_prediction(prediction_id):
         }), 500
 
 
+@app.route("/api/predictions/analytics", methods=["GET"])
+def analytics():
+    """Get analytics about predictions"""
+    try:
+        analytics_data = get_analytics()
+        return jsonify({
+            "success": True,
+            "analytics": analytics_data,
+        }), 200
+    except Exception as e:
+        logger.error(f"Error retrieving analytics: {str(e)}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": "Failed to retrieve analytics",
+        }), 500
+
+
 @app.route("/api/categories", methods=["GET"])
 def get_categories():
     """Get category definitions (for frontend reference)"""
@@ -173,7 +194,7 @@ def get_categories():
     return jsonify({
         "success": True,
         "categories": categories,
-        "total_max_score": 300,
+        "total_max_score": ScoreCalculator.TOTAL_MAX_SCORE,
     }), 200
 
 
@@ -197,6 +218,16 @@ def internal_error(error):
     }), 500
 
 
+@app.teardown_appcontext
+def shutdown_db(exception):
+    """Close MongoDB connection on app shutdown"""
+    close_db()
+
+
 if __name__ == "__main__":
     logger.info("Starting Flask server...")
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    try:
+        app.run(debug=False, host="0.0.0.0", port=5000)
+    except KeyboardInterrupt:
+        logger.info("Shutting down...")
+        close_db()

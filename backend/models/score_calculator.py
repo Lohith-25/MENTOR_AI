@@ -11,9 +11,13 @@ logger = logging.getLogger(__name__)
 
 class ScoreCalculator:
     """
-    Calculates placement eligibility score based on 8 weighted categories.
-    Total score: 0-300 points
-    Eligibility: Red (<100), Yellow (100-200), Green (200+)
+        Calculates placement eligibility score based on 8 weighted categories.
+        Total score: 0-300 marks (normalized)
+        Real-case eligibility thresholds (II Year 2028 batch):
+            - Not Yet Eligible: < 70 marks
+            - Below 5 LPA: 70-129 marks
+            - Above 5 to Below 10 LPA: 130-259 marks
+            - Above 10 LPA: 260+ marks
     """
     
     # Category definitions: (name, max_points, weight)
@@ -27,12 +31,16 @@ class ScoreCalculator:
         "aptitude": {"max": 20, "weight": 0.03, "name": "Aptitude"},
         "skillrank": {"max": 15, "weight": 0.02, "name": "SkillRank"},
     }
+
+    # Maximum total score after weighting
+    TOTAL_MAX_SCORE = 300
     
-    # Eligibility thresholds
+    # Eligibility thresholds (real-case rubric)
     ELIGIBILITY_TIERS = [
-        {"min": 0, "max": 99, "tier": "Below 5 LPA", "color": "red"},
-        {"min": 100, "max": 199, "tier": "5–10 LPA", "color": "yellow"},
-        {"min": 200, "max": 300, "tier": "Above 10 LPA", "color": "green"},
+        {"min": 0, "max": 69, "tier": "Not Yet Eligible", "color": "red"},
+        {"min": 70, "max": 129, "tier": "Below 5 LPA", "color": "red"},
+        {"min": 130, "max": 259, "tier": "Above 5 to Below 10 LPA", "color": "yellow"},
+        {"min": 260, "max": TOTAL_MAX_SCORE, "tier": "Above 10 LPA", "color": "green"},
     ]
     
     @staticmethod
@@ -53,10 +61,13 @@ class ScoreCalculator:
             "projects": {"type": str, "enum": ["Beginner", "Intermediate", "Advanced"]},
             "aptitude": {"type": (int, float), "min": 0, "max": 100},
             "skillrank": {"type": (int, float), "min": 0, "max": 100},
+            "certificate_marks": {"type": (int, float), "min": 0, "max": 100, "optional": True},
         }
         
         for field, rules in validations.items():
             if field not in data:
+                if rules.get("optional"):
+                    continue
                 errors[field] = f"Missing required field: {field}"
                 continue
             
@@ -132,10 +143,14 @@ class ScoreCalculator:
         return max(0, min(score, max_score))
     
     @staticmethod
-    def calculate_total_score(raw_scores: Dict[str, float]) -> float:
+    def calculate_total_score(raw_scores: Dict[str, float], certificate_marks: float = 0) -> float:
         """
         Calculate weighted total score (0-300 scale).
-        Formula: Σ((category_score / max_score) × weight × 100)
+        Formula: Σ((category_score / max_score) × weight × TOTAL_MAX_SCORE) + certificate_marks
+        
+        Args:
+            raw_scores: Dictionary of category scores
+            certificate_marks: Additional marks from uploaded certificates (0-100, capped)
         """
         total = 0.0
         logger.info("Calculating weighted scores:")
@@ -149,17 +164,23 @@ class ScoreCalculator:
             # Clamp raw score to max
             clamped_score = ScoreCalculator.clamp_score(raw_score, max_points)
             
-            # Weighted calculation
-            normalized = (clamped_score / max_points) * weight * 100
+            # Weighted calculation on 0-TOTAL_MAX_SCORE scale
+            normalized = (clamped_score / max_points) * weight * ScoreCalculator.TOTAL_MAX_SCORE
             total += normalized
             
             logger.info(
-                f"  {name}: {clamped_score}/{max_points} × {weight} × 100 = {normalized:.2f}"
+                f"  {name}: {clamped_score}/{max_points} × {weight} × {ScoreCalculator.TOTAL_MAX_SCORE} = {normalized:.2f}"
             )
         
-        # Final clamp to ensure 0-300 range
-        final_score = ScoreCalculator.clamp_score(total, 300)
-        logger.info(f"Total score: {final_score:.2f}/300")
+        # Add certificate marks (capped at 100 max contribution to avoid exceeding 300)
+        cert_contribution = ScoreCalculator.clamp_score(certificate_marks, 100)
+        if cert_contribution > 0:
+            logger.info(f"  Certificate marks: +{cert_contribution}")
+            total += cert_contribution
+        
+        # Final clamp to ensure 0-TOTAL_MAX_SCORE range
+        final_score = ScoreCalculator.clamp_score(total, ScoreCalculator.TOTAL_MAX_SCORE)
+        logger.info(f"Total score: {final_score:.2f}/{ScoreCalculator.TOTAL_MAX_SCORE}")
         
         return round(final_score, 2)
     
@@ -178,10 +199,10 @@ class ScoreCalculator:
         
         # Fallback (shouldn't reach here if bounds are correct)
         return {
-            "tier": "Below 5 LPA",
+            "tier": "Not Yet Eligible",
             "color": "red",
             "min_score": 0,
-            "max_score": 99,
+            "max_score": 69,
         }
     
     @staticmethod
@@ -262,8 +283,11 @@ class ScoreCalculator:
         # Map to scores
         raw_scores = ScoreCalculator.map_input_to_scores(input_data)
         
-        # Calculate total score
-        total_score = ScoreCalculator.calculate_total_score(raw_scores)
+        # Extract certificate marks (optional, defaults to 0)
+        certificate_marks = input_data.get("certificate_marks", 0)
+        
+        # Calculate total score including certificate marks
+        total_score = ScoreCalculator.calculate_total_score(raw_scores, certificate_marks)
         
         # Get eligibility
         eligibility = ScoreCalculator.get_eligibility(total_score)
@@ -280,7 +304,8 @@ class ScoreCalculator:
             "eligibility": eligibility,
             "category_breakdown": category_breakdown,
             "suggestions": suggestions,
-            "max_possible_score": 300,
+            "max_possible_score": ScoreCalculator.TOTAL_MAX_SCORE,
+            "certificate_marks": certificate_marks,
         }
         
         logger.info(f"Prediction successful: {result}")
