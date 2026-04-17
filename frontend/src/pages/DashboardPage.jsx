@@ -9,31 +9,101 @@ import AnalyticsSection from '../components/AnalyticsSection'
 import SuggestionsCard from '../components/SuggestionsCard'
 import EligibilityCards from '../components/EligibilityCards'
 import CertificateBreakdown from '../components/CertificateBreakdown'
+import Rubric2028 from '../components/Rubric2028'
 import Confetti from '../components/Confetti'
 
 const DashboardPage = ({ onLogout }) => {
   const navigate = useNavigate()
   const { predictionResult } = usePrediction()
   const [isConfetti, setIsConfetti] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Redirect to input if no prediction result
-    if (!predictionResult) {
-      navigate('/')
-      return
-    }
-
     // Trigger confetti for top tier
-    if (predictionResult.eligibility?.color === 'green') {
+    if (predictionResult?.eligibility?.color === 'green') {
       setIsConfetti(true)
     }
-  }, [predictionResult, navigate])
+    setLoading(false)
+  }, [predictionResult])
+
+  // Debug logging
+  useEffect(() => {
+    console.log('DashboardPage - predictionResult:', predictionResult)
+  }, [predictionResult])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-4 border-blue-200 border-t-blue-700 rounded-full"
+        />
+      </div>
+    )
+  }
 
   if (!predictionResult) {
-    return null
+    return (
+      <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-md"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200">
+            <AlertCircle size={48} className="mx-auto text-yellow-500 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">No Prediction Yet</h2>
+            <p className="text-slate-600 mb-6">
+              Please fill out the eligibility form first to see your placement prediction and analysis.
+            </p>
+            <motion.button
+              onClick={() => navigate('/predictor')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full px-6 py-3 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-800 transition-all"
+            >
+              Go to Form
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    )
   }
 
   const { total_score, max_possible_score, eligibility, category_breakdown, suggestions, certificate_marks, certificates } = predictionResult
+
+  // Validate required data
+  if (!eligibility || !category_breakdown || !suggestions) {
+    console.error('Missing required data:', { eligibility, category_breakdown, suggestions })
+    return (
+      <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-md"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-red-200">
+            <AlertCircle size={48} className="mx-auto text-red-500 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Error Loading Dashboard</h2>
+            <p className="text-slate-600 mb-6">
+              The prediction data is incomplete. Please try submitting the form again.
+            </p>
+            <motion.button
+              onClick={() => navigate('/predictor')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full px-6 py-3 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-800 transition-all"
+            >
+              Go Back to Form
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },

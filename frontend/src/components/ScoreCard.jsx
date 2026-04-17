@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Doughnut } from 'react-chartjs-2'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-
-ChartJS.register(ArcElement, Tooltip, Legend)
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
   const [displayScore, setDisplayScore] = useState(0)
@@ -55,53 +52,40 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
     }
   }
 
-  const chartData = {
-    datasets: [
-      {
-        data: [totalScore, maxScore - totalScore],
-        backgroundColor: [getChartColor(), '#F1F5F9'], // slate-100 for remaining
-        borderWidth: 0,
-        borderRadius: 8,
-      },
-    ],
-  }
+  const chartData = [
+    { name: 'Score', value: totalScore, color: getChartColor() },
+    { name: 'Remaining', value: maxScore - totalScore, color: '#F1F5F9' }
+  ]
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: '#1E293B',
-        titleColor: '#F8FAFC',
-        bodyColor: '#F8FAFC',
-        padding: 12,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context) => {
-            if (context.dataIndex === 0) {
-              return `Score: ${totalScore}/${maxScore}`
-            }
-            return `Remaining: ${maxScore - totalScore}`
-          },
-        },
-      },
-    },
-    cutout: '75%',
-  }
+  const COLORS = [getChartColor(), '#F1F5F9']
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.2, duration: 0.6 }}
-      className={`bg-white border border-slate-100 rounded-3xl p-12 text-center space-y-8 ${getGlowColor()} ring-1 transition-all duration-500`}
+      className={`bg-white border border-slate-100 rounded-2xl md:rounded-3xl p-4 md:p-8 lg:p-12 text-center space-y-6 md:space-y-8 ${getGlowColor()} ring-1 transition-all duration-500`}
     >
       {/* Animated gauge */}
-      <div className="relative w-72 h-72 mx-auto filter drop-shadow-sm">
-        <Doughnut data={chartData} options={chartOptions} />
+      <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72 mx-auto filter drop-shadow-sm">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={45}
+              outerRadius={75}
+              fill="#8884d8"
+              dataKey="value"
+              stroke="none"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
         
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -111,10 +95,10 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
             transition={{ delay: 0.5, type: 'spring' }}
             className="flex flex-col items-center mt-4"
           >
-            <div className="text-7xl font-black text-slate-900 tracking-tighter">
+            <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tighter">
               {displayScore}
             </div>
-            <div className="text-slate-500 font-bold uppercase tracking-widest text-sm mt-1">/ {maxScore}</div>
+            <div className="text-slate-500 font-bold uppercase tracking-widest text-xs sm:text-sm mt-1">/ {maxScore}</div>
           </motion.div>
         </div>
       </div>
@@ -125,7 +109,7 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
-        <div className={`inline-flex items-center px-8 py-3 rounded-full font-extrabold text-lg shadow-sm border ${
+        <div className={`inline-flex items-center px-4 sm:px-6 md:px-8 py-2 sm:py-3 rounded-full font-bold sm:font-extrabold text-sm sm:text-base md:text-lg shadow-sm border ${
           eligibility.color === 'green'
             ? 'bg-green-50 text-green-700 border-green-200'
             : eligibility.color === 'yellow'

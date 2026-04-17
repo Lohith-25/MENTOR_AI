@@ -50,8 +50,8 @@ def get_db():
     if _mongo_client is None:
         try:
             logger.info(f"Connecting to MongoDB at {MONGODB_URI}")
-            # Use shorter timeout for initial connection check to fail faster
-            temp_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=2000, **MONGO_CLIENT_OPTS)
+            # Create client with all options from MONGO_CLIENT_OPTS
+            temp_client = MongoClient(MONGODB_URI, **MONGO_CLIENT_OPTS)
             
             # Test connection by pinging server
             temp_client.admin.command("ping")
@@ -72,7 +72,12 @@ def init_db():
     try:
         db = get_db()
         
-        # Create collection if it doesn't exist
+        # Check if database connection was successful
+        if db is None:
+            logger.error("✗ MongoDB connection failed during initialization")
+            return
+        
+        # Create prediction collection if it doesn't exist
         if COLLECTION_NAME not in db.list_collection_names():
             db.create_collection(COLLECTION_NAME)
             logger.info(f"✓ Created collection '{COLLECTION_NAME}'")
@@ -96,6 +101,21 @@ def init_db():
             sparse=True
         )
         logger.info("✓ Created TTL index (90-day retention)")
+        
+        # Initialize users collection
+        if "users" not in db.list_collection_names():
+            db.create_collection("users")
+            logger.info("✓ Created collection 'users'")
+        
+        users_collection = db["users"]
+        
+        # Create unique index on email for users
+        users_collection.create_index([("email", 1)], unique=True, name="idx_email_unique")
+        logger.info("✓ Created unique index on email")
+        
+        # Create index on created_at for user list queries
+        users_collection.create_index([("created_at", DESCENDING)], name="idx_users_created_at")
+        logger.info("✓ Created index on users.created_at")
         
         logger.info(f"✓ MongoDB database '{DB_NAME}' initialized successfully")
         
@@ -135,6 +155,9 @@ def save_prediction(
     
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            raise Exception("Database connection failed")
         collection = db[COLLECTION_NAME]
         
         # Create prediction document
@@ -176,6 +199,9 @@ def get_prediction_history(limit: int = 10) -> list:
     
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            return []
         collection = db[COLLECTION_NAME]
         
         # Query: latest predictions, sorted by timestamp descending
@@ -226,6 +252,9 @@ def get_prediction_by_id(prediction_id: str) -> Optional[Dict[str, Any]]:
     """
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            return None
         collection = db[COLLECTION_NAME]
         
         # Convert string ID to ObjectId
@@ -265,6 +294,9 @@ def get_analytics() -> dict:
     """
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            return {}
         collection = db[COLLECTION_NAME]
         
         # Total predictions
@@ -344,6 +376,9 @@ def get_user_tasks(email: str) -> dict:
     """
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            return {"streak": 0, "tasks": []}
         tasks_coll = db[TASKS_COLLECTION]
         users_coll = db[USERS_COLLECTION]
         
@@ -418,6 +453,9 @@ def toggle_task(task_id: str) -> bool:
     """Toggle completion status of a task and update streaks if needed."""
     try:
         db = get_db()
+        if db is None:
+            logger.error("Database connection failed")
+            return False
         tasks_coll = db[TASKS_COLLECTION]
         users_coll = db[USERS_COLLECTION]
         

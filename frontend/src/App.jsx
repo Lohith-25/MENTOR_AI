@@ -71,7 +71,7 @@ function App() {
           {/* Login route */}
           <Route 
             path="/" 
-            element={isAuthenticated ? <Navigate to="/predictor" replace /> : <LoginPage />} 
+            element={isAuthenticated ? <Navigate to="/user-dashboard" replace /> : <LoginPage />} 
           />
 
           {/* Protected predictor route */}

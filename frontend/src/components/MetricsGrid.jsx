@@ -54,11 +54,11 @@ const MetricsGrid = ({ categoryBreakdown }) => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="space-y-4 md:space-y-6"
     >
-      <h2 className="text-2xl font-extrabold text-blue-900 tracking-tight">Performance Breakdown</h2>
+      <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-blue-900 tracking-tight px-4 sm:px-0">Performance Breakdown</h2>
       
-      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6 px-4 sm:px-0">
         {Object.entries(categoryBreakdown).map(([key, category], idx) => {
           const Icon = iconMap[key]
           const { bar, text, light } = getColorByPercentage(category.percentage)
@@ -68,20 +68,20 @@ const MetricsGrid = ({ categoryBreakdown }) => {
               key={key}
               variants={itemVariants}
               whileHover={{ scale: 1.02, y: -2 }}
-              className="group bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-300"
+              className="group bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-300"
             >
-              <div className="relative p-6 space-y-5">
+              <div className="relative p-3 md:p-6 space-y-3 md:space-y-5">
                 {/* Header with icon and name */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className={`p-2 rounded-lg ${light} text-slate-700 group-hover:text-blue-700 group-hover:bg-blue-50 transition-colors`}>
-                        <Icon size={20} />
+                    <div className="flex items-center gap-2 md:gap-3 mb-1">
+                      <div className={`p-1.5 md:p-2 rounded-lg ${light} text-slate-700 group-hover:text-blue-700 group-hover:bg-blue-50 transition-colors`}>
+                        <Icon size={18} className="md:w-5 md:h-5" />
                       </div>
-                      <h3 className="font-bold text-slate-800 transition-all">{category.name}</h3>
+                      <h3 className="font-bold text-xs sm:text-sm md:text-base text-slate-800 transition-all">{category.name}</h3>
                     </div>
                   </div>
-                  <div className={`text-xl font-black ${text}`}>
+                  <div className={`text-lg md:text-xl font-black ${text}`}>
                     {category.percentage.toFixed(0)}%
                   </div>
                 </div>

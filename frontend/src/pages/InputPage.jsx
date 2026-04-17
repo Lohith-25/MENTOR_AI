@@ -198,20 +198,27 @@ const InputPage = ({ onLogout }) => {
         })),
       }
 
+      console.log('Submitting form data:', dataToSend)
       const result = await predictionAPI.predict(dataToSend)
+      console.log('Backend response:', result)
 
       if (result.success) {
+        console.log('Saving prediction to context...')
         savePrediction(result, dataToSend)
+        console.log('Navigating to dashboard...')
         navigate('/dashboard')
       } else {
-        setSubmitError(result.error || 'Failed to analyze. Please try again.')
-        setErrorState(result.error)
+        const errorMsg = result.error || 'Failed to analyze. Please try again.'
+        console.error('Prediction failed:', errorMsg)
+        setSubmitError(errorMsg)
+        setErrorState(errorMsg)
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Server error. Please try again.'
+      const errorMessage = error.response?.data?.error || error.message || 'Server error. Please try again.'
+      console.error('Submission error:', error)
+      console.error('Error details:', errorMessage)
       setSubmitError(errorMessage)
       setErrorState(errorMessage)
-      console.error('Submission error:', error)
     } finally {
       setIsSubmitting(false)
       setLoadingState(false)
@@ -244,20 +251,20 @@ const InputPage = ({ onLogout }) => {
       const description = field.descriptions?.[formData[fieldKey]]
       return (
         <div key={fieldKey} className="group flex flex-col h-full">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
-            <Icon size={16} className="text-blue-700 transition-all" />
+          <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
+            <Icon size={14} className="sm:w-4 sm:h-4 text-blue-700 transition-all flex-shrink-0" />
             {field.label}
           </label>
           <select
             name={fieldKey}
             value={formData[fieldKey]}
             onChange={handleInputChange}
-            className="w-full px-4 py-3 rounded-lg bg-white border border-slate-300 hover:border-blue-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 text-slate-900 transition-all duration-300 cursor-pointer appearance-none shadow-sm"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 min-h-[44px] rounded-lg bg-white border border-slate-300 hover:border-blue-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 text-sm sm:text-base text-slate-900 transition-all duration-300 cursor-pointer appearance-none shadow-sm"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
               backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: '36px',
+              backgroundPosition: 'right 10px center',
+              paddingRight: '32px',
             }}
           >
             {field.options.map(option => (
@@ -275,8 +282,8 @@ const InputPage = ({ onLogout }) => {
 
     return (
       <div key={fieldKey} className="group flex flex-col h-full">
-        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
-          <Icon size={16} className="text-blue-700 transition-all" />
+        <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 mb-1.5 sm:mb-2">
+          <Icon size={14} className="sm:w-4 sm:h-4 text-blue-700 transition-all flex-shrink-0" />
           {field.label}
         </label>
         <input
@@ -287,14 +294,14 @@ const InputPage = ({ onLogout }) => {
           max={field.max}
           value={formData[fieldKey]}
           onChange={handleInputChange}
-          className={`w-full px-4 py-3 rounded-lg border transition-all duration-300 text-slate-900 bg-white placeholder-slate-400 shadow-sm ${
+          className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 min-h-[44px] rounded-lg border transition-all duration-300 text-sm sm:text-base text-slate-900 bg-white placeholder-slate-400 shadow-sm ${
             errors[fieldKey]
               ? 'border-red-400 bg-red-50 focus:ring-2 focus:ring-red-100'
               : 'border-slate-300 hover:border-blue-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100'
           }`}
         />
         {field.hint && (
-          <p className="text-xs text-slate-500 mt-2 whitespace-pre-line leading-relaxed flex-grow">
+          <p className="text-xs text-slate-500 mt-1.5 sm:mt-2 whitespace-pre-line leading-relaxed flex-grow">
             {field.hint}
           </p>
         )}
@@ -422,7 +429,7 @@ const InputPage = ({ onLogout }) => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+      <div className="fixed top-3 right-3 z-50 flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
         <button
           onClick={() => navigate('/user-dashboard')}
           className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-slate-600 hover:text-blue-700 rounded-lg shadow-sm transition-all duration-300"
