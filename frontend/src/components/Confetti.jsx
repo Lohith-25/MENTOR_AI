@@ -29,7 +29,7 @@ const Confetti = () => {
         >
           <div
             className={`w-2 h-2 rounded-full ${
-              ['bg-brand-blue', 'bg-brand-purple', 'bg-brand-green', 'bg-brand-yellow'][
+              ['bg-blue-500', 'bg-indigo-500', 'bg-emerald-500', 'bg-amber-500'][
                 Math.floor(Math.random() * 4)
               ]
             }`}

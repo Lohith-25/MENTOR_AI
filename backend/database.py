@@ -37,25 +37,32 @@ MONGO_CLIENT_OPTS = {
 # Global MongoDB client (singleton pattern)
 _mongo_client: Optional[MongoClient] = None
 _db = None
+_mongo_failed = False  # Track if connection has permanently failed to avoid repeated timeouts
 
 
 def get_db():
     """Get MongoDB database connection (lazy initialization)"""
-    global _mongo_client, _db
+    global _mongo_client, _db, _mongo_failed
     
+    if _mongo_failed:
+        return None
+
     if _mongo_client is None:
         try:
             logger.info(f"Connecting to MongoDB at {MONGODB_URI}")
-            _mongo_client = MongoClient(MONGODB_URI, **MONGO_CLIENT_OPTS)
+            # Use shorter timeout for initial connection check to fail faster
+            temp_client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=2000, **MONGO_CLIENT_OPTS)
             
             # Test connection by pinging server
-            _mongo_client.admin.command("ping")
+            temp_client.admin.command("ping")
             logger.info("✓ MongoDB connection successful")
             
+            _mongo_client = temp_client
             _db = _mongo_client[DB_NAME]
         except (ServerSelectionTimeoutError, ConnectionFailure) as e:
             logger.error(f"✗ Failed to connect to MongoDB: {e}")
-            raise
+            _mongo_failed = True  # Mark as failed to avoid repeating this time-consuming attempt
+            return None
     
     return _db
 
@@ -322,3 +329,126 @@ def close_db():
             logger.info("✓ MongoDB connection closed")
         except Exception as e:
             logger.error(f"✗ Error closing MongoDB connection: {e}")
+
+# =====================================================================
+# Task and Streak Management
+# =====================================================================
+
+TASKS_COLLECTION = "tasks"
+USERS_COLLECTION = "users"
+
+def get_user_tasks(email: str) -> dict:
+    """
+    Get tasks and streak data for a user.
+    Auto-generates basic tasks if none exist for today.
+    """
+    try:
+        db = get_db()
+        tasks_coll = db[TASKS_COLLECTION]
+        users_coll = db[USERS_COLLECTION]
+        
+        # Get or create user streak info
+        user = users_coll.find_one({"email": email})
+        if not user:
+            user = {
+                "email": email,
+                "streak": 0,
+                "last_active_date": None,
+                "created_at": datetime.utcnow()
+            }
+            users_coll.insert_one(user)
+        
+        # Check streak logic
+        today_str = datetime.utcnow().strftime("%Y-%m-%d")
+        yesterday_str = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        if user.get("last_active_date") == yesterday_str:
+            # Active yesterday, check if all tasks were completed yesterday to maintain streak
+            # Simplification: just logging in today increments streak if they logged in yesterday
+            pass
+        elif user.get("last_active_date") != today_str:
+            # Missed a day
+            if user.get("last_active_date") != yesterday_str and user.get("last_active_date") is not None:
+                # reset streak
+                users_coll.update_one({"email": email}, {"$set": {"streak": 0}})
+                user["streak"] = 0
+            
+            # Update last active
+            users_coll.update_one({"email": email}, {"$set": {"last_active_date": today_str}})
+            
+        # Get today's tasks
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_tasks = list(tasks_coll.find({
+            "email": email,
+            "created_at": {"$gte": today_start}
+        }))
+        
+        if not today_tasks:
+            # Auto-generate daily tasks
+            default_tasks = [
+                {"email": email, "title": "Solve 2 LeetCode problems", "completed": False, "created_at": datetime.utcnow()},
+                {"email": email, "title": "Review Data Structures", "completed": False, "created_at": datetime.utcnow()},
+                {"email": email, "title": "Update projects on GitHub", "completed": False, "created_at": datetime.utcnow()}
+            ]
+            tasks_coll.insert_many(default_tasks)
+            today_tasks = list(tasks_coll.find({
+                "email": email,
+                "created_at": {"$gte": today_start}
+            }))
+            
+        # Format tasks
+        formatted_tasks = []
+        for task in today_tasks:
+            formatted_tasks.append({
+                "id": str(task["_id"]),
+                "title": task["title"],
+                "completed": task["completed"]
+            })
+            
+        return {
+            "streak": user.get("streak", 0),
+            "tasks": formatted_tasks
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching tasks for {email}: {e}", exc_info=True)
+        return {"streak": 0, "tasks": []}
+
+def toggle_task(task_id: str) -> bool:
+    """Toggle completion status of a task and update streaks if needed."""
+    try:
+        db = get_db()
+        tasks_coll = db[TASKS_COLLECTION]
+        users_coll = db[USERS_COLLECTION]
+        
+        task = tasks_coll.find_one({"_id": ObjectId(task_id)})
+        if not task:
+            return False
+            
+        new_status = not task.get("completed", False)
+        tasks_coll.update_one({"_id": ObjectId(task_id)}, {"$set": {"completed": new_status}})
+        
+        # Check if all daily tasks are completed to increment streak
+        email = task.get("email")
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        all_tasks = list(tasks_coll.find({"email": email, "created_at": {"$gte": today_start}}))
+        all_completed = all(t.get("completed", False) for t in all_tasks) if all_tasks else False
+        
+        # Actually it's one task we just updated so let's recheck cleanly
+        if new_status: # Just marked as completed
+            # See if ALL tasks today are completed
+            if all(t.get("completed", False) or str(t["_id"]) == task_id for t in all_tasks):
+                today_str = datetime.utcnow().strftime("%Y-%m-%d")
+                user = users_coll.find_one({"email": email})
+                # if user hasn't gotten streak incremented today:
+                if user and user.get("last_streak_increment_date") != today_str:
+                    users_coll.update_one(
+                        {"email": email}, 
+                        {"$inc": {"streak": 1}, "$set": {"last_streak_increment_date": today_str}}
+                    )
+
+        return True
+    except Exception as e:
+        logger.error(f"Error toggling task {task_id}: {e}")
+        return False

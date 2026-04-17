@@ -8,7 +8,7 @@ import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models.score_calculator import ScoreCalculator
-from database import init_db, save_prediction, get_prediction_history, get_prediction_by_id, get_analytics, close_db
+from database import init_db, save_prediction, get_prediction_history, get_prediction_by_id, get_analytics, close_db, get_user_tasks, toggle_task
 
 # Configure logging
 logging.basicConfig(
@@ -21,9 +21,11 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5174"])  # Vite default ports
 
-# Initialize database
-init_db()
-
+# Initialize database with fallback
+try:
+    init_db()
+except Exception as e:
+    logger.warning(f"Database initialization failed. App will run in memory-only mode. Error: {e}")
 
 @app.before_request
 def log_request():
@@ -222,6 +224,45 @@ def internal_error(error):
 def shutdown_db(exception):
     """Close MongoDB connection on app shutdown"""
     close_db()
+
+@app.route("/api/tasks", methods=["GET"])
+def fetch_tasks():
+    email = request.args.get("email")
+    if not email:
+        return jsonify({"success": False, "error": "Email required"}), 400
+    
+    data = get_user_tasks(email)
+    return jsonify({"success": True, "data": data}), 200
+
+@app.route("/api/tasks/toggle", methods=["POST"])
+def toggle_user_task():
+    data = request.get_json()
+    task_id = data.get("task_id")
+    if not task_id:
+        return jsonify({"success": False, "error": "Task ID required"}), 400
+    
+    success = toggle_task(task_id)
+    return jsonify({"success": success}), 200
+
+@app.route("/api/ai/guide", methods=["POST"])
+def ai_guide():
+    data = request.get_json()
+    email = data.get("email", "User")
+    
+    # Mock AI response
+    suggestions = [
+        "Consistent daily practice is key to acing interviews! Keep tackling LeetCode.",
+        "Your resume projects look good, try contributing to an open source repo next.",
+        "Aptitude tests are crucial for the first round, don't ignore them.",
+        "Stay motivated! You're on a great path towards your goal package."
+    ]
+    import random
+    advice = random.choice(suggestions)
+    
+    return jsonify({
+        "success": True,
+        "guide": advice
+    }), 200
 
 
 if __name__ == "__main__":

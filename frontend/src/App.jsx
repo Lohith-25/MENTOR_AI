@@ -4,6 +4,7 @@ import { PredictionProvider } from './context/PredictionContext'
 import LoginPage from './pages/LoginPage'
 import InputPage from './pages/InputPage'
 import DashboardPage from './pages/DashboardPage'
+import UserDashboard from './pages/UserDashboard'
 import { predictionAPI } from './utils/api'
 
 function App() {
@@ -83,6 +84,12 @@ function App() {
           <Route 
             path="/dashboard" 
             element={isAuthenticated ? <DashboardPage onLogout={handleLogout} /> : <Navigate to="/" replace />} 
+          />
+
+          {/* User tasks dashboard route */}
+          <Route 
+            path="/user-dashboard" 
+            element={isAuthenticated ? <UserDashboard onLogout={handleLogout} /> : <Navigate to="/" replace />} 
           />
 
           {/* Catch all - redirect to home */}

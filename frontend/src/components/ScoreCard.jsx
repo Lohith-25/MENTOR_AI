@@ -32,26 +32,26 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
   const getGlowColor = () => {
     switch (eligibility.color) {
       case 'red':
-        return 'shadow-glow-red'
+        return 'shadow-[0_0_30px_rgba(239,68,68,0.15)] ring-red-100'
       case 'yellow':
-        return 'shadow-glow-yellow'
+        return 'shadow-[0_0_30px_rgba(245,158,11,0.15)] ring-yellow-100'
       case 'green':
-        return 'shadow-glow-green'
+        return 'shadow-[0_0_30px_rgba(16,185,129,0.15)] ring-green-100'
       default:
-        return 'shadow-glow'
+        return 'shadow-[0_0_30px_rgba(59,130,246,0.15)] ring-blue-100'
     }
   }
 
   const getChartColor = () => {
     switch (eligibility.color) {
       case 'red':
-        return '#EF4444'
+        return '#EF4444' // red-500
       case 'yellow':
-        return '#FBBF24'
+        return '#F59E0B' // amber-500
       case 'green':
-        return '#10B981'
+        return '#10B981' // emerald-500
       default:
-        return '#3B82F6'
+        return '#3B82F6' // blue-500
     }
   }
 
@@ -59,9 +59,8 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
     datasets: [
       {
         data: [totalScore, maxScore - totalScore],
-        backgroundColor: [getChartColor(), 'rgba(255, 255, 255, 0.05)'],
-        borderColor: ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)'],
-        borderWidth: 1,
+        backgroundColor: [getChartColor(), '#F1F5F9'], // slate-100 for remaining
+        borderWidth: 0,
         borderRadius: 8,
       },
     ],
@@ -75,6 +74,11 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         display: false,
       },
       tooltip: {
+        backgroundColor: '#1E293B',
+        titleColor: '#F8FAFC',
+        bodyColor: '#F8FAFC',
+        padding: 12,
+        cornerRadius: 8,
         callbacks: {
           label: (context) => {
             if (context.dataIndex === 0) {
@@ -85,7 +89,7 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         },
       },
     },
-    cutout: '70%',
+    cutout: '75%',
   }
 
   return (
@@ -93,10 +97,10 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.2, duration: 0.6 }}
-      className={`glass-lg p-12 text-center space-y-6 ${getGlowColor()} transition-all duration-500`}
+      className={`bg-white border border-slate-100 rounded-3xl p-12 text-center space-y-8 ${getGlowColor()} ring-1 transition-all duration-500`}
     >
       {/* Animated gauge */}
-      <div className="relative w-64 h-64 mx-auto">
+      <div className="relative w-72 h-72 mx-auto filter drop-shadow-sm">
         <Doughnut data={chartData} options={chartOptions} />
         
         {/* Center content */}
@@ -105,11 +109,12 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.5, type: 'spring' }}
+            className="flex flex-col items-center mt-4"
           >
-            <div className="text-6xl font-bold text-transparent bg-gradient-to-r from-brand-blue via-brand-purple to-brand-green bg-clip-text">
+            <div className="text-7xl font-black text-slate-900 tracking-tighter">
               {displayScore}
             </div>
-            <div className="text-slate-400 text-sm mt-2">/ {maxScore}</div>
+            <div className="text-slate-500 font-bold uppercase tracking-widest text-sm mt-1">/ {maxScore}</div>
           </motion.div>
         </div>
       </div>
@@ -120,12 +125,12 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
-        <div className={`inline-block px-8 py-3 rounded-full font-bold text-lg backdrop-blur-md ${
+        <div className={`inline-flex items-center px-8 py-3 rounded-full font-extrabold text-lg shadow-sm border ${
           eligibility.color === 'green'
-            ? 'bg-green-500/20 text-green-300 border border-green-500/50'
+            ? 'bg-green-50 text-green-700 border-green-200'
             : eligibility.color === 'yellow'
-            ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
-            : 'bg-red-500/20 text-red-300 border border-red-500/50'
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : 'bg-red-50 text-red-700 border-red-200'
         }`}>
           {eligibility.tier}
         </div>
@@ -136,7 +141,7 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1 }}
-        className="text-slate-400 text-sm"
+        className="text-slate-600 font-medium max-w-lg mx-auto leading-relaxed"
       >
         <p>
           {eligibility.tier === 'Not Yet Eligible' &&
@@ -155,23 +160,23 @@ const ScoreCard = ({ totalScore, maxScore, eligibility }) => {
         initial={{ width: 0 }}
         animate={{ width: '100%' }}
         transition={{ delay: 0.5, duration: 1 }}
-        className="space-y-2 mt-8"
+        className="space-y-3 mt-10 max-w-xl mx-auto"
       >
-        <div className="flex justify-between text-xs text-slate-400 mb-2">
-          <span>Overall Progress</span>
+        <div className="flex justify-between text-sm font-bold text-slate-700 mb-2">
+          <span className="uppercase tracking-wider text-xs text-slate-500">Overall Progress</span>
           <span>{percentage.toFixed(1)}%</span>
         </div>
-        <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-slate-700/50">
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner flex">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
             transition={{ delay: 0.3, duration: 1.2, ease: 'easeOut' }}
-            className={`h-full rounded-full bg-gradient-to-r ${
+            className={`h-full rounded-full shadow-sm ${
               eligibility.color === 'green'
-                ? 'from-green-500 to-green-400'
+                ? 'bg-green-500'
                 : eligibility.color === 'yellow'
-                ? 'from-yellow-500 to-yellow-400'
-                : 'from-red-500 to-red-400'
+                ? 'bg-amber-500'
+                : 'bg-red-500'
             }`}
           ></motion.div>
         </div>

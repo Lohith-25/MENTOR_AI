@@ -90,7 +90,8 @@ def start_services():
         [python_exe, os.path.join(backend_dir, "app.py")],
         cwd=backend_dir,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        shell=platform.system() == "Windows"
     )
     
     time.sleep(3)
@@ -105,7 +106,8 @@ def start_services():
         ["npm", "run", "dev"],
         cwd=frontend_dir,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        shell=platform.system() == "Windows"
     )
     
     time.sleep(5)

@@ -24,10 +24,10 @@ const MetricsGrid = ({ categoryBreakdown }) => {
   }
 
   const getColorByPercentage = (percentage) => {
-    if (percentage >= 80) return { bar: 'bg-green-500', text: 'text-green-400' }
-    if (percentage >= 60) return { bar: 'bg-blue-500', text: 'text-blue-400' }
-    if (percentage >= 40) return { bar: 'bg-yellow-500', text: 'text-yellow-400' }
-    return { bar: 'bg-red-500', text: 'text-red-400' }
+    if (percentage >= 80) return { bar: 'bg-green-500', text: 'text-green-600', light: 'bg-green-50' }
+    if (percentage >= 60) return { bar: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50' }
+    if (percentage >= 40) return { bar: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50' }
+    return { bar: 'bg-red-500', text: 'text-red-600', light: 'bg-red-50' }
   }
 
   const containerVariants = {
@@ -54,64 +54,62 @@ const MetricsGrid = ({ categoryBreakdown }) => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4"
+      className="space-y-6"
     >
-      <h2 className="text-2xl font-bold text-slate-100 mb-6">Performance Breakdown</h2>
+      <h2 className="text-2xl font-extrabold text-blue-900 tracking-tight">Performance Breakdown</h2>
       
-      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Object.entries(categoryBreakdown).map(([key, category], idx) => {
           const Icon = iconMap[key]
-          const { bar, text } = getColorByPercentage(category.percentage)
+          const { bar, text, light } = getColorByPercentage(category.percentage)
           
           return (
             <motion.div
               key={key}
               variants={itemVariants}
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="group glass hover-lift overflow-hidden"
+              whileHover={{ scale: 1.02, y: -2 }}
+              className="group bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:border-slate-300 transition-all duration-300"
             >
-              {/* Card background animation */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 to-slate-800/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <div className="relative p-6 space-y-4">
+              <div className="relative p-6 space-y-5">
                 {/* Header with icon and name */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Icon size={20} className="text-brand-blue group-hover:text-brand-purple transition-all" />
-                      <h3 className="font-semibold text-slate-200 group-hover:text-white transition-all">{category.name}</h3>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className={`p-2 rounded-lg ${light} text-slate-700 group-hover:text-blue-700 group-hover:bg-blue-50 transition-colors`}>
+                        <Icon size={20} />
+                      </div>
+                      <h3 className="font-bold text-slate-800 transition-all">{category.name}</h3>
                     </div>
                   </div>
-                  <div className={`text-lg font-bold ${text}`}>
+                  <div className={`text-xl font-black ${text}`}>
                     {category.percentage.toFixed(0)}%
                   </div>
                 </div>
 
                 {/* Score display */}
-                <div className="text-sm text-slate-400 flex justify-between">
-                  <span>Score</span>
-                  <span className="text-slate-300 font-medium">{category.score} / {category.max}</span>
+                <div className="text-sm font-semibold flex justify-between">
+                  <span className="text-slate-500 uppercase tracking-widest text-xs">Score</span>
+                  <span className="text-slate-800">{category.score} / {category.max}</span>
                 </div>
 
                 {/* Animated progress bar */}
                 <div className="space-y-2">
-                  <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden border border-slate-700/30">
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner flex">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${category.percentage}%` }}
                       transition={{ delay: idx * 0.05 + 0.3, duration: 1, ease: 'easeOut' }}
-                      className={`h-full rounded-full ${bar} shadow-lg`}
+                      className={`h-full rounded-full ${bar}`}
                     ></motion.div>
                   </div>
                 </div>
 
-                {/* Weight info (hover) */}
+                {/* Weight info */}
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  className="text-xs text-slate-500 pt-2 border-t border-slate-700/30"
+                  className="text-xs text-slate-500 font-medium pt-3 border-t border-slate-100 flex items-center justify-between"
                 >
-                  Weight: {(category.weight * 100).toFixed(0)}%
+                  <span>Weight impact</span>
+                  <span className="bg-slate-50 px-2 py-0.5 rounded text-slate-600 border border-slate-100">{(category.weight * 100).toFixed(0)}%</span>
                 </motion.div>
               </div>
             </motion.div>
@@ -124,23 +122,27 @@ const MetricsGrid = ({ categoryBreakdown }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="mt-8 grid grid-cols-4 gap-2 p-4 glass rounded-lg"
+        className="mt-8 grid grid-cols-4 gap-4 p-5 bg-white border border-slate-200 rounded-xl shadow-sm"
       >
-        <div className="text-center text-xs">
-          <div className="h-3 rounded bg-green-500 mb-2"></div>
-          <div className="text-slate-400">80%+</div>
+        <div className="text-center">
+          <div className="h-3 rounded-md bg-green-500 mb-2 shadow-sm"></div>
+          <div className="text-slate-600 font-semibold text-xs">80%+</div>
+          <div className="text-slate-400 text-[10px] uppercase tracking-wider">Excellent</div>
         </div>
-        <div className="text-center text-xs">
-          <div className="h-3 rounded bg-blue-500 mb-2"></div>
-          <div className="text-slate-400">60-80%</div>
+        <div className="text-center">
+          <div className="h-3 rounded-md bg-blue-500 mb-2 shadow-sm"></div>
+          <div className="text-slate-600 font-semibold text-xs">60-80%</div>
+          <div className="text-slate-400 text-[10px] uppercase tracking-wider">Good</div>
         </div>
-        <div className="text-center text-xs">
-          <div className="h-3 rounded bg-yellow-500 mb-2"></div>
-          <div className="text-slate-400">40-60%</div>
+        <div className="text-center">
+          <div className="h-3 rounded-md bg-amber-500 mb-2 shadow-sm"></div>
+          <div className="text-slate-600 font-semibold text-xs">40-60%</div>
+          <div className="text-slate-400 text-[10px] uppercase tracking-wider">Average</div>
         </div>
-        <div className="text-center text-xs">
-          <div className="h-3 rounded bg-red-500 mb-2"></div>
-          <div className="text-slate-400">&lt;40%</div>
+        <div className="text-center">
+          <div className="h-3 rounded-md bg-red-500 mb-2 shadow-sm"></div>
+          <div className="text-slate-600 font-semibold text-xs">&lt;40%</div>
+          <div className="text-slate-400 text-[10px] uppercase tracking-wider">Needs Work</div>
         </div>
       </motion.div>
     </motion.div>

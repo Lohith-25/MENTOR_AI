@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Upload, X, Check, AlertCircle, Award } from 'lucide-react'
+import { Upload, X, Check, AlertCircle, Award, Info } from 'lucide-react'
 
 const CertificateUpload = ({ onCertificatesChange }) => {
   const [certificates, setCertificates] = useState([])
@@ -177,11 +177,11 @@ const CertificateUpload = ({ onCertificatesChange }) => {
     >
       {/* Header */}
       <div>
-        <h3 className="text-xl font-semibold text-slate-100 mb-2 flex items-center gap-2">
-          <Award size={20} className="text-brand-blue" />
-          Certificate Upload (Checkpoint 4)
+        <h3 className="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+          <Award size={20} className="text-blue-700" />
+          Certificate Upload
         </h3>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500 font-medium">
           Upload your certificates to automatically add marks. Minimum 2 certificates required for eligibility.
         </p>
       </div>
@@ -192,10 +192,10 @@ const CertificateUpload = ({ onCertificatesChange }) => {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative p-8 rounded-lg border-2 border-dashed transition-all duration-300 cursor-pointer ${
+        className={`relative p-8 rounded-xl border-2 border-dashed transition-all duration-300 cursor-pointer flex flex-col items-center justify-center min-h-[160px] ${
           dragActive
-            ? 'border-brand-blue bg-brand-blue/10'
-            : 'border-slate-600 hover:border-slate-500 bg-slate-900/30'
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-slate-300 hover:border-blue-400 bg-slate-50/50'
         }`}
       >
         <input
@@ -212,16 +212,18 @@ const CertificateUpload = ({ onCertificatesChange }) => {
             animate={{ y: dragActive ? -5 : 0 }}
             className="mb-4 flex justify-center"
           >
-            <Upload size={40} className="text-slate-400" />
+            <div className={`p-4 rounded-full ${dragActive ? 'bg-blue-100 text-blue-600' : 'bg-white shadow-sm text-slate-400'}`}>
+              <Upload size={32} />
+            </div>
           </motion.div>
-          <p className="text-slate-300 font-medium">Drag certificates here or click to browse</p>
+          <p className="text-slate-700 font-semibold text-sm">Drag certificates here or click to browse</p>
           <p className="text-xs text-slate-500 mt-2">PNG, JPG, or PDF (Max 5MB each)</p>
         </div>
 
         {uploading && (
-          <div className="absolute inset-0 bg-slate-900/50 rounded-lg flex items-center justify-center">
-            <div className="flex items-center gap-2 text-slate-300">
-              <div className="animate-spin h-4 w-4 border-2 border-brand-blue border-t-transparent rounded-full"></div>
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+            <div className="flex flex-col items-center gap-3 text-blue-700 font-medium">
+              <div className="animate-spin h-8 w-8 border-4 border-blue-200 border-t-blue-700 rounded-full"></div>
               Uploading...
             </div>
           </div>
@@ -232,7 +234,7 @@ const CertificateUpload = ({ onCertificatesChange }) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm flex items-center gap-2"
+          className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium flex items-center gap-2"
         >
           <AlertCircle size={18} />
           {error}
@@ -241,55 +243,55 @@ const CertificateUpload = ({ onCertificatesChange }) => {
 
       {/* Uploaded Certificates List */}
       {certificates.length > 0 && (
-        <motion.div className="space-y-3">
+        <motion.div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-slate-300">
+            <h4 className="text-sm font-bold text-slate-700">
               Uploaded Certificates ({certificates.length})
             </h4>
             {totalMarks > 0 && (
-              <div className="px-3 py-1 bg-green-500/20 border border-green-500/50 rounded-full text-green-300 text-xs font-semibold">
+              <div className="px-3 py-1 bg-green-100 border border-green-200 rounded-full text-green-700 text-xs font-bold shadow-sm">
                 +{totalMarks} marks
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             {certificates.map((cert, idx) => (
               <motion.div
                 key={cert.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="glass-lg p-4 space-y-3"
+                className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-4"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-200 truncate">{cert.fileName}</p>
-                    <p className="text-xs text-slate-500 mt-1">Uploaded: {cert.uploadedAt}</p>
+                    <p className="text-sm font-bold text-slate-800 truncate">{cert.fileName}</p>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">Uploaded: {cert.uploadedAt}</p>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => handleRemove(cert.id)}
-                    className="p-2 hover:bg-red-500/20 rounded-lg text-red-400 transition-all"
+                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600 transition-all"
                   >
                     <X size={18} />
                   </motion.button>
                 </div>
 
                 {/* Certificate Type Selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-slate-400 mb-1 block">Certificate Type</label>
+                    <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Certificate Type</label>
                     <select
                       value={cert.type}
                       onChange={(e) => handleTypeChange(cert.id, e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 text-sm text-white cursor-pointer appearance-none"
+                      className="w-full px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-300 text-sm text-slate-800 font-medium cursor-pointer appearance-none hover:border-blue-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
                       style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
                         backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 8px center',
-                        paddingRight: '28px',
+                        backgroundPosition: 'right 12px center',
+                        paddingRight: '36px',
                       }}
                     >
                       {Object.entries(certificateTypes).map(([type, data]) => (
@@ -301,16 +303,16 @@ const CertificateUpload = ({ onCertificatesChange }) => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-slate-400 mb-1 block">Marks Awarded</label>
-                    <div className="px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/50 text-sm font-semibold text-green-400 flex items-center gap-2">
-                      <Check size={16} className="text-green-500" />
+                    <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Marks Awarded</label>
+                    <div className="px-4 py-2.5 rounded-lg bg-green-50 border border-green-200 text-sm font-bold text-green-700 flex items-center gap-2 shadow-sm">
+                      <Check size={16} className="text-green-600" />
                       +{cert.marks} marks
                     </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-500">
-                  {certificateTypes[cert.type].description}
+                <p className="text-xs text-slate-500 font-medium bg-slate-50 inline-block px-2 py-1 rounded">
+                  <span className="text-slate-700">Note:</span> {certificateTypes[cert.type].description}
                 </p>
               </motion.div>
             ))}
@@ -324,15 +326,19 @@ const CertificateUpload = ({ onCertificatesChange }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="p-4 bg-slate-800/30 border border-slate-700/30 rounded-lg"
+          className="p-5 bg-white border border-slate-200 shadow-sm rounded-xl"
         >
-          <p className="text-xs font-semibold text-slate-300 mb-3">Supported Certificate Types:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <p className="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2">
+            <Info size={16} className="text-blue-600" />
+            Supported Certificate Types
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
             {Object.entries(certificateTypes)
               .filter(([type]) => type !== 'Other')
               .map(([type, data]) => (
-                <div key={type} className="text-xs text-slate-400">
-                  <span className="text-slate-300 font-medium">{type}:</span> {data.description}
+                <div key={type} className="text-xs">
+                  <span className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded leading-relaxed">{type}</span>
+                  <span className="text-slate-500 font-medium ml-2 block mt-1">{data.description}</span>
                 </div>
               ))}
           </div>

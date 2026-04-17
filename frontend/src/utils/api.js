@@ -76,6 +76,39 @@ export const predictionAPI = {
       return { status: 'unhealthy' }
     }
   },
+
+  /**
+   * User dashboard tasks & streaks
+   */
+  getTasks: async (email) => {
+    try {
+      const response = await api.get('/api/tasks', { params: { email } })
+      return response.data
+    } catch (error) {
+      console.error('Task fetch error', error)
+      throw error
+    }
+  },
+
+  toggleTask: async (taskId) => {
+    try {
+      const response = await api.post('/api/tasks/toggle', { task_id: taskId })
+      return response.data
+    } catch (error) {
+      console.error('Task toggle error', error)
+      throw error
+    }
+  },
+
+  getAIGuide: async (email) => {
+    try {
+      const response = await api.post('/api/ai/guide', { email })
+      return response.data
+    } catch (error) {
+      console.error('AI Guide error', error)
+      throw error
+    }
+  }
 }
 
 export default api
