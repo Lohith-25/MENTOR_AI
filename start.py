@@ -71,6 +71,9 @@ def start_services():
     """Start backend and frontend servers"""
     print_header("STARTING SERVICES")
     
+    # Check if running on Railway (production)
+    is_railway = os.getenv("RAILWAY_ENVIRONMENT_NAME") is not None
+    
     backend_dir = os.path.join(os.path.dirname(__file__), "backend")
     frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
     
@@ -96,41 +99,53 @@ def start_services():
     
     time.sleep(3)
     
-    print("🚀 Starting Frontend...")
-    print(f"   Command: npm run dev")
-    print("   URL: http://localhost:5173")
-    print("   ⏳ Waiting 5 seconds...\n")
+    # Only start frontend on local development, not on Railway
+    if not is_railway:
+        print("🚀 Starting Frontend...")
+        print(f"   Command: npm run dev")
+        print("   URL: http://localhost:5173")
+        print("   ⏳ Waiting 5 seconds...\n")
+        
+        # Start frontend in subprocess
+        frontend_process = subprocess.Popen(
+            ["npm", "run", "dev"],
+            cwd=frontend_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=platform.system() == "Windows"
+        )
+    else:
+        frontend_process = None
     
-    # Start frontend in subprocess
-    frontend_process = subprocess.Popen(
-        ["npm", "run", "dev"],
-        cwd=frontend_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=platform.system() == "Windows"
-    )
-    
-    time.sleep(5)
+    if not is_railway:
+        time.sleep(5)
     
     print_header("✨ APPLICATION READY")
-    print("\n🌐 Open your browser and navigate to:")
-    print("   http://localhost:5173")
-    print("\n📊 Backend API:")
-    print("   http://localhost:5000/api/health")
-    print("\n💡 Troubleshooting:")
-    print("   • Backend port 5000 already in use? Kill the process")
-    print("   • Frontend port 5173 already in use? Kill the process")
-    print("   • Check console output above for errors")
-    print("\n⏹️  Press Ctrl+C to stop both servers")
+    
+    if is_railway:
+        print("\n🚀 Backend is running on Railway!")
+        print("   📊 API: Your Railway URL")
+    else:
+        print("\n🌐 Open your browser and navigate to:")
+        print("   http://localhost:5173")
+        print("\n📊 Backend API:")
+        print("   http://localhost:5000/api/health")
+        print("\n💡 Troubleshooting:")
+        print("   • Backend port 5000 already in use? Kill the process")
+        print("   • Frontend port 5173 already in use? Kill the process")
+        print("   • Check console output above for errors")
+        print("\n⏹️  Press Ctrl+C to stop both servers")
     
     try:
         # Keep processes running
         backend_process.wait()
-        frontend_process.wait()
+        if frontend_process:
+            frontend_process.wait()
     except KeyboardInterrupt:
         print("\n\n🛑 Stopping services...")
         backend_process.terminate()
-        frontend_process.terminate()
+        if frontend_process:
+            frontend_process.terminate()
         print("✅ Services stopped")
 
 def main():
